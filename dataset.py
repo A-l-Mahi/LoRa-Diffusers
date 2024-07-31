@@ -1,7 +1,14 @@
 import os
-import os
+import argparse
 import shutil
 from sklearn.model_selection import train_test_split
+
+parser = argparse.ArgumentParser(description="Dataset script")
+
+parser.add_argument("--path", "-p", type=str,
+                    help='Set path to your data set')
+
+args = parser.parse_args()
 
 
 def rename_files(directory):
@@ -27,7 +34,7 @@ def rename_files(directory):
 
 
 
-def train_test_split(dir_path, imag):
+def train_test_split(dir_path):
 
     # Specify the directory containing the files
     if not rename_files(dir_path):
@@ -48,39 +55,24 @@ def train_test_split(dir_path, imag):
     train_images, test_images = train_test_split(all_images, test_size=0.2, random_state=42)
 
     # Move images to respective directories
+
+    train_path = os.path.join(dir_path, img), os.path.join(train_dir, img)
+    test_path = os.path.join(dir_path, img), os.path.join(test_dir, img)
+
     for img in train_images:
-        shutil.move(os.path.join(dir_path, img), os.path.join(train_dir, img))
+        shutil.move(train_path)
 
     for img in test_images:
-        shutil.move(os.path.join(dir_path, img), os.path.join(test_dir, img))
+        shutil.move(test_path)
 
-    print(f"Training images: {len(train_images)}")
-    print(f"Testing images: {len(test_images)}")
+    print(f"Train path: {train_path} \n Training images: {len(train_images)}")
+    print("\n------\n")
+    print(f"Test path: {test_path} \n Testing images: {len(test_images)}")
 
     return True
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+if __name__ == "__main__": 
+    train_test_split(args.path)
 
 
 
