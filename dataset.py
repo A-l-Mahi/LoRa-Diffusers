@@ -34,7 +34,7 @@ def rename_files(directory):
 
 
 
-def train_test_split(dir_path):
+def images_train_test_split(dir_path):
 
     # Specify the directory containing the files
     if not rename_files(dir_path):
@@ -52,27 +52,26 @@ def train_test_split(dir_path):
     all_images = [f for f in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, f))]
 
     # Split into train and test sets
-    train_images, test_images = train_test_split(all_images, test_size=0.2, random_state=42)
-
+    try:
+        train_images, test_images = train_test_split(all_images, test_size=0.2, random_state=42)
+    except ValueError as e:
+        print(f"{e} raise, The image folder is empty.")
     # Move images to respective directories
 
-    train_path = os.path.join(dir_path, img), os.path.join(train_dir, img)
-    test_path = os.path.join(dir_path, img), os.path.join(test_dir, img)
-
     for img in train_images:
-        shutil.move(train_path)
+        shutil.move(os.path.join(dir_path, img), os.path.join(train_dir, img))
 
     for img in test_images:
-        shutil.move(test_path)
+        shutil.move(os.path.join(dir_path, img), os.path.join(test_dir, img))
 
-    print(f"Train path: {train_path} \n Training images: {len(train_images)}")
+    print(f"Train path: {train_dir} \n Training images: {len(train_images)}")
     print("\n------\n")
-    print(f"Test path: {test_path} \n Testing images: {len(test_images)}")
+    print(f"Test path: {test_dir} \n Testing images: {len(test_images)}")
 
     return True
 
 if __name__ == "__main__": 
-    train_test_split(args.path)
+    images_train_test_split(args.path)
 
 
 
