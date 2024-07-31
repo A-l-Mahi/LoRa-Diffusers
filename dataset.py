@@ -1,7 +1,17 @@
 import os
 import argparse
 import shutil
+import requests
+
+from PIL import Image
 from sklearn.model_selection import train_test_split
+from transformers import BlipProcessor, BlipForConditionalGeneration
+
+import os
+import shutil
+import csv
+
+import re
 
 parser = argparse.ArgumentParser(description="Dataset script")
 
@@ -69,6 +79,90 @@ def images_train_test_split(dir_path):
     print(f"Test path: {test_dir} \n Testing images: {len(test_images)}")
 
     return True
+
+
+
+def caption_model():
+    # Load the model and processor
+    processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
+    model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
+
+
+# function to generate captions for images
+
+def genCaption(imagePath, processor, model):
+    # Load an image
+    image = Image.open(imagePath)
+
+    # Process the image and generate a caption
+    inputs = processor(image, return_tensors="pt")
+    out = model.generate(**inputs)
+    caption = processor.decode(out[0], skip_special_tokens=True)
+
+    return(caption)
+
+
+
+def annotates_images(path, sub_df):
+    # Annotates images
+
+    imagesTrainPath = os.path.join(path, "train")
+    imagesTestPath = os.path.join(path, "test")
+
+    trainMeta = [["file_name", "label"]]
+    testMeta = [["fil_ename", "label"]]
+
+    imagesTrain = os.listdir(imagesTrainPath)
+
+    pattern1 = r'image_\d+\.png'
+    pattern2 = r'image_(\d+)'
+
+    regex1 = re.compile(pattern1)
+    regex2 = re.compile(pattern2)
+
+    for image in imagesTrain:
+        path = os.path.join(imagesTrainPath, image)
+        if ".ipynb_checkpoints" == image:
+            try:
+                shutil.rmtree(path)
+                continue
+            except:
+                pass
+        elif "metadata.csv" == image:
+            continue
+        elif regex1.match(image):
+            idx = int(regex2.search(image).group(1))
+            trainMeta.append([image, sub_df['prompt'][idx]])
+            continue
+        caption = genCaption(path)
+        trainMeta.append([image, caption])
+        with open(os.path.join(imagesTrainPath, "metadata.csv"), "w") as file:
+            writer = csv.writer(file)
+            writer.writerows(trainMeta)
+
+
+    imagesTest = os.listdir(imagesTestPath)
+
+    for image in imagesTest:
+        path = os.path.join(imagesTestPath, image)
+        if ".ipynb_checkpoints" == image:
+            try:
+                shutil.rmtree(path)
+                continue
+            except:
+                pass
+        elif "metadata.csv" == image:
+            continue
+        elif regex1.match(image):
+            idx = int(regex2.search(image).group(1))
+            testMeta.append([image, sub_df['prompt'][idx]])
+            continue
+        caption = genCaption(path)
+        testMeta.append([image, caption])
+        with open(os.path.join(imagesTestPath, "metadata.csv"), "w") as file:
+            writer = csv.writer(file)
+            writer.writerows(testMeta)
+
 
 if __name__ == "__main__": 
     images_train_test_split(args.path)
